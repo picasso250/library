@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import sys, os, time, thread, glib, gobject, datetime
+import pickle
+import pygst
+pygst.require("0.10")
+import gst, json, urllib, httplib, contextlib, random, binascii
+from select import select
+from Cookie import SimpleCookie
+from contextlib import closing 
+
+class XcFetch(object):
+    def fetch_html(self):
+        data = {
+                }
+        data = urllib.urlencode(data)
+
+        print 'fetch ...'
+        with closing(self.get_conn()) as conn:
+            headers = self.get_headers_for_request()
+            conn.request("GET", "/waiguo2005/b/bujiaqiu/srt/001.htm", data, headers)
+            response = conn.getresponse()
+
+            set_cookie = response.getheader('Set-Cookie')
+            if not set_cookie is None:
+                cookie = SimpleCookie(set_cookie)
+                self.save_cookie(cookie)
+
+            body = response.read();
+            print body
+
+    def get_conn(self):
+        return httplib.HTTPConnection("www.tianyabook.com")
+
+
+    def get_headers_for_request(self, extra = {}):
+        headers = {
+            'Connection': 'keep-alive',
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'X-Requested-With': 'XMLHttpRequest',
+            'User-Agent': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/28.0.1500.71 Chrome/28.0.1500.71 Safari/537.36',
+            'Referer': 'http://douban.fm/',
+            'Accept-Language': 'zh-CN,zh;q=0.8'
+        }
+        return headers
+
+
+class Cache:
+    """docstring for cache"""
+    def has(self, name):
+        file_name = self.get_cache_file_name(name)
+        return os.path.exists(file_name)
+
+    def get(self, name, default = None):
+        file_name = self.get_cache_file_name(name)
+        if not os.path.exists(file_name):
+            return default
+        cache_file = open(file_name, 'rb')
+        content = pickle.load(cache_file)
+        cache_file.close()
+        return content
+
+    def set(self, name, content):
+        file_name = self.get_cache_file_name(name)
+        cache_file = open(file_name, 'wb')
+        pickle.dump(content, cache_file)
+        cache_file.close()
+
+    def get_cache_file_name(self, name):
+        # file should put to /tmp ?
+        # but maybe someone clear their /tmp everyday ?
+        return name + '.cache'
+
+xcfetch = XcFetch()
+xcfetch.fetch_html()
