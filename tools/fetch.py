@@ -10,6 +10,21 @@ from select import select
 from Cookie import SimpleCookie
 from contextlib import closing 
 
+from HTMLParser import HTMLParser
+
+# create a subclass and override the handler methods
+class TianyaHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.last_tag = None
+    def handle_starttag(self, tag, attrs):
+        self.last_tag = tag
+    def handle_endtag(self, tag):
+        pass
+    def handle_data(self, data):
+        if self.last_tag == 'pre':
+            self.content = data
+
 class XcFetch(object):
     def fetch_html(self):
         cache = Cache()
@@ -42,6 +57,17 @@ class XcFetch(object):
         }
         return headers
 
+    def fetch_content(self):
+        xcfetch = XcFetch()
+        # html = xcfetch.fetch_html()
+        html = Cache().get('html').decode('gb2312').encode('utf-8')
+
+        # instantiate the parser and fed it some HTML
+        parser = TianyaHTMLParser()
+        parser.feed(html)
+        return parser.content
+
+
 
 class Cache:
     """docstring for cache"""
@@ -69,27 +95,8 @@ class Cache:
         # but maybe someone clear their /tmp everyday ?
         return name + '.cache'
 
+
+        
 xcfetch = XcFetch()
-# html = xcfetch.fetch_html()
-html = Cache().get('html').decode('gb2312').encode('utf-8')
-
-
-from HTMLParser import HTMLParser
-
-# create a subclass and override the handler methods
-class MyHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.last_tag = None
-    def handle_starttag(self, tag, attrs):
-        self.last_tag = tag
-    def handle_endtag(self, tag):
-        pass
-    def handle_data(self, data):
-        if self.last_tag == 'pre':
-            self.content = data
-
-# instantiate the parser and fed it some HTML
-parser = MyHTMLParser()
-parser.feed(html)
-print parser.content
+content = xcfetch.fetch_content()
+print content
