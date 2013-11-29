@@ -12,6 +12,7 @@ from contextlib import closing
 
 class XcFetch(object):
     def fetch_html(self):
+        cache = Cache()
         data = {
                 }
         data = urllib.urlencode(data)
@@ -22,13 +23,9 @@ class XcFetch(object):
             conn.request("GET", "/waiguo2005/b/bujiaqiu/srt/001.htm", data, headers)
             response = conn.getresponse()
 
-            set_cookie = response.getheader('Set-Cookie')
-            if not set_cookie is None:
-                cookie = SimpleCookie(set_cookie)
-                self.save_cookie(cookie)
-
             body = response.read();
-            print body
+            cache.set('html', body)
+        return body.decode('gb2312').encode('utf-8')
 
     def get_conn(self):
         return httplib.HTTPConnection("www.tianyabook.com")
@@ -73,4 +70,26 @@ class Cache:
         return name + '.cache'
 
 xcfetch = XcFetch()
-xcfetch.fetch_html()
+# html = xcfetch.fetch_html()
+html = Cache().get('html').decode('gb2312').encode('utf-8')
+
+
+from HTMLParser import HTMLParser
+
+# create a subclass and override the handler methods
+class MyHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.last_tag = None
+    def handle_starttag(self, tag, attrs):
+        self.last_tag = tag
+    def handle_endtag(self, tag):
+        pass
+    def handle_data(self, data):
+        if self.last_tag == 'pre':
+            self.content = data
+
+# instantiate the parser and fed it some HTML
+parser = MyHTMLParser()
+parser.feed(html)
+print parser.content
