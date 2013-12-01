@@ -68,7 +68,7 @@ class XcFetch(object):
                 }
         data = urllib.urlencode(data)
 
-        print 'fetch ...'
+        print 'fetch', path, '...'
         with closing(httplib.HTTPConnection(host)) as conn:
             headers = self.get_headers_for_request()
             conn.request("GET", path, data, headers)
@@ -76,7 +76,7 @@ class XcFetch(object):
 
             body = response.read();
             cache.set('html', body)
-        return body.decode('gb2312').encode('utf-8')
+        return body.decode('gbk').encode('utf-8')
 
     def get_headers_for_request(self, extra = {}):
         headers = {
@@ -91,7 +91,7 @@ class XcFetch(object):
 
     def fetch_save_page(self, root, host, path):
         html = self.fetch_html(host, path)
-        # html = Cache().get('html').decode('gb2312').encode('utf-8')
+        print html
         parser = TianyaBookContentHTMLParser()
         parser.feed(html)
 
@@ -100,8 +100,7 @@ class XcFetch(object):
             f.write(parser.content)
 
     def fetch_toc(self, host, path):
-        # html = self.fetch_html(host, path)
-        html = Cache().get('html').decode('gb2312').encode('utf-8')
+        html = self.fetch_html(host, path)
         parser = TianyaBookTocHTMLParser()
         parser.feed(html)
         parser.chapters_link = [path+x for x in parser.chapters_link]
@@ -109,10 +108,11 @@ class XcFetch(object):
 
     def fetch_recursive(self, root, host, path):
         parser = self.fetch_toc(host, path)
+        print parser.chapters_title
+        print parser.chapters_link
         self.save_toc(root, parser.chapters_title)
 
         for x in parser.chapters_link:
-            print x
             self.fetch_save_page(root, host, x)
 
     def save_toc(self, root, titles):
@@ -150,7 +150,7 @@ class Cache:
 
 root = '../book/十日谈'
 host = 'www.tianyabook.com'
-path = '/waiguo2005/b/bujiaqiu/srt/001.htm'
+path = '/waiguo2005/b/bujiaqiu/srt/010.htm'
     
 xcfetch = XcFetch()
 path = '/waiguo2005/b/bujiaqiu/srt/'
