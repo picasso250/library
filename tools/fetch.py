@@ -17,13 +17,21 @@ class TianyaHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.last_tag = None
+        self.title = None
     def handle_starttag(self, tag, attrs):
         self.last_tag = tag
     def handle_endtag(self, tag):
         pass
     def handle_data(self, data):
         if self.last_tag == 'pre':
-            self.content = data
+            content = data
+            content = re.split(r'\r\n\r\n', content)
+            content = [ '<p>' + re.sub(r'\r\n', '', x) + '</p>' for x in content]
+            content = '\n'.join(content)
+            self.content = content
+        if self.last_tag == 'title' and self.title is None:
+            data = re.split('---', data)
+            self.title = data[0]
 
 class XcFetch(object):
     def fetch_html(self):
@@ -57,17 +65,6 @@ class XcFetch(object):
         }
         return headers
 
-    def fetch_content(self):
-        xcfetch = XcFetch()
-        # html = xcfetch.fetch_html()
-        html = Cache().get('html').decode('gb2312').encode('utf-8')
-
-        # instantiate the parser and fed it some HTML
-        parser = TianyaHTMLParser()
-        parser.feed(html)
-        return parser.content
-
-
 
 class Cache:
     """docstring for cache"""
@@ -95,11 +92,16 @@ class Cache:
         # but maybe someone clear their /tmp everyday ?
         return name + '.cache'
 
-
         
 xcfetch = XcFetch()
-content = xcfetch.fetch_content()
-content = re.split(r'\r\n\r\n', content)
-content = [ '<p>' + re.sub(r'\r\n', '', x) + '</p>' for x in content]
-content = '\n'.join(content)
-print content
+# html = xcfetch.fetch_html()
+html = Cache().get('html').decode('gb2312').encode('utf-8')
+parser = TianyaHTMLParser()
+parser.feed(html)
+
+root = '..'
+f = open(root+'/'+parser.title+'.html', 'w')
+with closing(f):
+    f.write(parser.content)
+
+# print parser.content
