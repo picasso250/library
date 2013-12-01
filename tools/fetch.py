@@ -38,7 +38,7 @@ class TianyaBookTocHTMLParser(HTMLParser):
         HTMLParser.__init__(self)
         self.last_tag = None
         self.title_pass = False
-        self.chapters = {}
+        self.chapters_link = []
         self.first_data = True
     def handle_starttag(self, tag, attrs):
         self.last_tag = tag
@@ -48,11 +48,15 @@ class TianyaBookTocHTMLParser(HTMLParser):
                     self.title_pass = True
         if tag == 'a':
             self.first_data = True
+        if self.title_pass and tag == 'table':
+            self.in_links_table = True
+        if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
+            self.chapters_link.append(attrs[0][1])
     def handle_endtag(self, tag):
-        pass
+        if self.title_pass and tag == 'table' and self.in_links_table == True:
+            self.in_links_table = False
     def handle_data(self, data):
-        if self.title_pass and self.last_tag == 'a' and self.first_data == True:
-            print ':',data
+        if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
             self.first_data = False
 
 class XcFetch(object):
@@ -98,7 +102,8 @@ class XcFetch(object):
         html = Cache().get('html').decode('gb2312').encode('utf-8')
         parser = TianyaBookTocHTMLParser()
         parser.feed(html)
-        # print html
+        chapters_link = [path+x for x in parser.chapters_link]
+        print chapters_link
 
 class Cache:
     """docstring for cache"""
