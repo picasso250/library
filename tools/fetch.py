@@ -13,7 +13,7 @@ from contextlib import closing
 from HTMLParser import HTMLParser
 
 # create a subclass and override the handler methods
-class TianyaHTMLParser(HTMLParser):
+class TianyaBookContentHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.last_tag = None
@@ -32,6 +32,28 @@ class TianyaHTMLParser(HTMLParser):
         if self.last_tag == 'title' and self.title is None:
             data = re.split('---', data)
             self.title = data[0]
+
+class TianyaBookTocHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.last_tag = None
+        self.title_pass = False
+        self.chapters = {}
+        self.first_data = True
+    def handle_starttag(self, tag, attrs):
+        self.last_tag = tag
+        if tag == 'font':
+            for (k, v) in attrs:
+                if k == 'size' and v == '+3':
+                    self.title_pass = True
+        if tag == 'a':
+            self.first_data = True
+    def handle_endtag(self, tag):
+        pass
+    def handle_data(self, data):
+        if self.title_pass and self.last_tag == 'a' and self.first_data == True:
+            print ':',data
+            self.first_data = False
 
 class XcFetch(object):
     def fetch_html(self, host, path):
@@ -62,16 +84,21 @@ class XcFetch(object):
         return headers
 
     def fetch_save_page(self, root, host, path):
-        # html = self.fetch_html(host, path)
-        html = Cache().get('html').decode('gb2312').encode('utf-8')
-        parser = TianyaHTMLParser()
+        html = self.fetch_html(host, path)
+        # html = Cache().get('html').decode('gb2312').encode('utf-8')
+        parser = TianyaBookContentHTMLParser()
         parser.feed(html)
 
         f = open(root+'/'+parser.title+'.html', 'w')
         with closing(f):
             f.write(parser.content)
 
-        # print parser.content
+    def fetch_toc(self, host, path):
+        # html = self.fetch_html(host, path)
+        html = Cache().get('html').decode('gb2312').encode('utf-8')
+        parser = TianyaBookTocHTMLParser()
+        parser.feed(html)
+        # print html
 
 class Cache:
     """docstring for cache"""
@@ -101,8 +128,10 @@ class Cache:
 
 
 root = '../book/十日谈'
-host = 'www.tianya.com'
+host = 'www.tianyabook.com'
 path = '/waiguo2005/b/bujiaqiu/srt/001.htm'
     
 xcfetch = XcFetch()
-html = xcfetch.fetch_save_page(root, host, path)
+path = '/waiguo2005/b/bujiaqiu/srt/'
+html = xcfetch.fetch_toc(host, path)
+# html = xcfetch.fetch_save_page(root, host, path)
