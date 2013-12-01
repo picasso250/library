@@ -34,25 +34,21 @@ class TianyaHTMLParser(HTMLParser):
             self.title = data[0]
 
 class XcFetch(object):
-    def fetch_html(self):
+    def fetch_html(self, host, path):
         cache = Cache()
         data = {
                 }
         data = urllib.urlencode(data)
 
         print 'fetch ...'
-        with closing(self.get_conn()) as conn:
+        with closing(httplib.HTTPConnection(host)) as conn:
             headers = self.get_headers_for_request()
-            conn.request("GET", "/waiguo2005/b/bujiaqiu/srt/001.htm", data, headers)
+            conn.request("GET", path, data, headers)
             response = conn.getresponse()
 
             body = response.read();
             cache.set('html', body)
         return body.decode('gb2312').encode('utf-8')
-
-    def get_conn(self):
-        return httplib.HTTPConnection("www.tianyabook.com")
-
 
     def get_headers_for_request(self, extra = {}):
         headers = {
@@ -65,6 +61,17 @@ class XcFetch(object):
         }
         return headers
 
+    def fetch_save_page(self, root, host, path):
+        # html = self.fetch_html(host, path)
+        html = Cache().get('html').decode('gb2312').encode('utf-8')
+        parser = TianyaHTMLParser()
+        parser.feed(html)
+
+        f = open(root+'/'+parser.title+'.html', 'w')
+        with closing(f):
+            f.write(parser.content)
+
+        # print parser.content
 
 class Cache:
     """docstring for cache"""
@@ -92,16 +99,10 @@ class Cache:
         # but maybe someone clear their /tmp everyday ?
         return name + '.cache'
 
-        
+
+root = '../book/十日谈'
+host = 'www.tianya.com'
+path = '/waiguo2005/b/bujiaqiu/srt/001.htm'
+    
 xcfetch = XcFetch()
-# html = xcfetch.fetch_html()
-html = Cache().get('html').decode('gb2312').encode('utf-8')
-parser = TianyaHTMLParser()
-parser.feed(html)
-
-root = '..'
-f = open(root+'/'+parser.title+'.html', 'w')
-with closing(f):
-    f.write(parser.content)
-
-# print parser.content
+html = xcfetch.fetch_save_page(root, host, path)
