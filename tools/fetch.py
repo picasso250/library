@@ -100,7 +100,6 @@ class Cache:
 xcfetch = XcFetch()
 content = xcfetch.fetch_content()
 content = re.split(r'\r\n\r\n', content)
-
-content = [ '<p>'+x+'</p>' for x in content]
+content = [ '<p>' + re.sub(r'\r\n', '', x) + '</p>' for x in content]
 content = '\n'.join(content)
 print content
