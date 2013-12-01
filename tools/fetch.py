@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys, os, time, thread, glib, gobject, datetime
-import pickle
+import pickle, re
 import pygst
 pygst.require("0.10")
 import gst, json, urllib, httplib, contextlib, random, binascii
@@ -99,4 +99,7 @@ class Cache:
         
 xcfetch = XcFetch()
 content = xcfetch.fetch_content()
+# content = re.sub(r'\r\n', '{newline}\n', content)
+content = re.split(r'\r\n', '{newline}\n', content)
+
 print content
