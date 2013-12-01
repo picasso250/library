@@ -116,7 +116,7 @@ class XcFetch(object):
             self.fetch_save_page(root, host, x)
 
     def save_toc(self, root, titles):
-        chapters = ['<a href="'+x+'">'+x+'</a>' for x in titles]
+        chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
         f = open(root+'/index.html', 'w')
         with closing(f):
             f.write('\n'.join(chapters))
