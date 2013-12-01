@@ -39,6 +39,7 @@ class TianyaBookTocHTMLParser(HTMLParser):
         self.last_tag = None
         self.title_pass = False
         self.chapters_link = []
+        self.chapters_title = []
         self.first_data = True
     def handle_starttag(self, tag, attrs):
         self.last_tag = tag
@@ -57,6 +58,7 @@ class TianyaBookTocHTMLParser(HTMLParser):
             self.in_links_table = False
     def handle_data(self, data):
         if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
+            self.chapters_title.append(data)
             self.first_data = False
 
 class XcFetch(object):
@@ -102,8 +104,22 @@ class XcFetch(object):
         html = Cache().get('html').decode('gb2312').encode('utf-8')
         parser = TianyaBookTocHTMLParser()
         parser.feed(html)
-        chapters_link = [path+x for x in parser.chapters_link]
-        print chapters_link
+        parser.chapters_link = [path+x for x in parser.chapters_link]
+        return parser
+
+    def fetch_recursive(self, root, host, path):
+        parser = self.fetch_toc(host, path)
+        self.save_toc(root, parser.chapters_title)
+
+        for x in parser.chapters_link:
+            print x
+            self.fetch_save_page(root, host, x)
+
+    def save_toc(self, root, titles):
+        chapters = ['<a href="'+x+'">'+x+'</a>' for x in titles]
+        f = open(root+'/index.html', 'w')
+        with closing(f):
+            f.write('\n'.join(chapters))
 
 class Cache:
     """docstring for cache"""
@@ -138,5 +154,6 @@ path = '/waiguo2005/b/bujiaqiu/srt/001.htm'
     
 xcfetch = XcFetch()
 path = '/waiguo2005/b/bujiaqiu/srt/'
-html = xcfetch.fetch_toc(host, path)
+# html = xcfetch.fetch_toc(host, path)
 # html = xcfetch.fetch_save_page(root, host, path)
+xcfetch.fetch_recursive(root, host, path)
