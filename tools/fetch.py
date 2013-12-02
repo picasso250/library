@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys, os, time, thread, glib, gobject, datetime
+import sys, os, time, thread, datetime
 import pickle, re
-import pygst
-pygst.require("0.10")
-import gst, json, urllib, httplib, contextlib, random, binascii
-from select import select
+import urllib, httplib, contextlib, random
 from Cookie import SimpleCookie
 from contextlib import closing 
 
