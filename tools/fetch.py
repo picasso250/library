@@ -108,18 +108,35 @@ class XcFetch(object):
 
     def fetch_recursive(self, root, host, path):
         parser = self.fetch_toc(host, path)
-        print parser.chapters_title
+        for x in parser.chapters_title:
+            print x 
         print parser.chapters_link
         self.save_toc(root, parser.chapters_title)
 
         for x in parser.chapters_link:
-            self.fetch_save_page(root, host, x)
+            self.fetch_save_chapter(root, host, x)
 
     def save_toc(self, root, titles):
         chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
         f = open(root+'/index.html', 'w')
         with closing(f):
             f.write('\n'.join(chapters))
+
+    def fetch_save_chapter(self, root, host, path):
+        html = self.fetch_html(host, path)
+        html = Cache().get('html').decode('gbk').encode('utf-8')
+        print html
+        if self.is_page(html):
+            self.fetch_save_page(root, host, path)
+        else:
+            self.fetch_save_chapter_small(root, host, path)
+
+    def is_page(self, html):
+        regex = re.compile('<pre>', re.IGNORECASE)
+        return regex.search(html)
+
+    def fetch_save_chapter_small(self, root, host, path):
+        pass
 
 class Cache:
     """docstring for cache"""
@@ -157,3 +174,5 @@ path = '/waiguo2005/b/bujiaqiu/srt/'
 # html = xcfetch.fetch_toc(host, path)
 # html = xcfetch.fetch_save_page(root, host, path)
 xcfetch.fetch_recursive(root, host, path)
+path = '/waiguo2005/b/bujiaqiu/srt/0001.htm'
+# xcfetch.fetch_save_chapter(root, host, path)
