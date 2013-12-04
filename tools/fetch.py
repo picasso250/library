@@ -65,24 +65,23 @@ class TianyaBookInnerTocHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
         self.last_tag = None
-        self.title_pass = False
         self.chapters_link = []
         self.chapters_title = []
-        self.first_data = True
-        self.in_content = None
+        self.in_content = False
     def handle_starttag(self, tag, attrs):
-        print 'start', tag
         self.last_tag = tag
-        if tag == 'hr' and self.in_content is None:
-            self.in_content = True
-        if tag == 'hr' and self.in_content:
-            self.in_content = False
+        if tag == 'hr':
+            if not self.in_content:
+                self.in_content = True
+            else:
+                self.in_content = False
+        if self.in_content and tag == 'a':
+            self.chapters_link.append(attrs[0][1])
     def handle_endtag(self, tag):
-        if self.title_pass and tag == 'table' and self.in_links_table == True:
-            self.in_links_table = False
+        pass
     def handle_data(self, data):
-        if self.in_content == True:
-            print data
+        if self.in_content == True and len(data.strip()) > 0 and self.last_tag == 'a':
+            self.chapters_title.append(data.strip())
 
 class XcFetch(object):
 
@@ -128,41 +127,25 @@ class XcFetch(object):
         if self.is_page(html):
             self.fetch_save_page(root, host, path)
         else:
-            self.fetch_save_chapter_small(root, host, path)
+            self.fetch_save_chapter_small(root, html)
 
     def is_page(self, html):
         regex = re.compile('<pre>', re.IGNORECASE)
         return regex.search(html)
 
-    def fetch_save_chapter_small(self, root, host, path):
-        pass
+    def fetch_save_chapter_small(self, root, host, path, html):
+        regex = re.compile(r'<HR\b.+?<HR\b.*?>', re.IGNORECASE | re.DOTALL)
+        m = regex.search(html)
+        content = m.group(0)
+        parser = TianyaBookInnerTocHTMLParser()
+        parser.feed(html);
+        baselink = os.path.dirname(path)
+        chapters_link = [baselink+'/'+x for x in parser.chapters_link]
+        print chapters_link
+        for x in parser.chapters_title:
+            print x
 
-class Cache:
-    """docstring for cache"""
-    def has(self, name):
-        file_name = self.get_cache_file_name(name)
-        return os.path.exists(file_name)
-
-    def get(self, name, default = None):
-        file_name = self.get_cache_file_name(name)
-        if not os.path.exists(file_name):
-            return default
-        cache_file = open(file_name, 'rb')
-        content = pickle.load(cache_file)
-        cache_file.close()
         return content
-
-    def set(self, name, content):
-        file_name = self.get_cache_file_name(name)
-        cache_file = open(file_name, 'wb')
-        pickle.dump(content, cache_file)
-        cache_file.close()
-
-    def get_cache_file_name(self, name):
-        # file should put to /tmp ?
-        # but maybe someone clear their /tmp everyday ?
-        return name + '.cache'
-
 
 root = '../book/十日谈'
 host = 'www.tianyabook.com'
@@ -175,5 +158,7 @@ path = '/waiguo2005/b/bujiaqiu/srt/'
 xcfetch.fetch_recursive(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/0001.htm'
 # xcfetch.fetch_save_chapter(root, host, path)
-path = 'fetch /waiguo2005/b/bujiaqiu/srt/1.html'
-xcfetch.fetch_save_chapter_small(root, host, path)
+path = '/waiguo2005/b/bujiaqiu/srt/1.html'
+# html = fetchlib.fetch_html(host, path);
+# html = fetchlib.Cache().get('html').decode('gbk').encode('utf-8')
+# xcfetch.fetch_save_chapter_small(root, host, path, html)
