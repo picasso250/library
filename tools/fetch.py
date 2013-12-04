@@ -96,6 +96,7 @@ class XcFetch(object):
             f.write(parser.content)
 
     def fetch_toc(self, host, path):
+        print 'fetch toc ...'
         html = fetchlib.fetch_html(host, path)
         parser = TianyaBookTocHTMLParser()
         parser.feed(html)
@@ -123,33 +124,46 @@ class XcFetch(object):
     def fetch_save_chapter(self, root, host, path):
         html = fetchlib.fetch_html(host, path)
         # html = Cache().get('html').decode('gbk').encode('utf-8')
-        print html
         if self.is_page(html):
             self.fetch_save_page(root, host, path)
         else:
-            self.fetch_save_chapter_small(root, html)
+            self.fetch_save_chapter_small(root, host, path, html)
 
     def is_page(self, html):
         regex = re.compile('<pre>', re.IGNORECASE)
         return regex.search(html)
 
     def fetch_save_chapter_small(self, root, host, path, html):
+        print 'fetch inner chapter ...'
+        regex = re.compile(r'<font size=\+3>(.+?)</font>', re.IGNORECASE)
+        m = regex.search(html)
+        print m
+        title = m.group(1)
+        root = root + '/' + title
+        if not os.path.exists(root):
+            os.makedirs(root)
+
+        print title
+
         regex = re.compile(r'<HR\b.+?<HR\b.*?>', re.IGNORECASE | re.DOTALL)
         m = regex.search(html)
         content = m.group(0)
+
+        # save toc
+        f = open(root+'/index.html', 'w')
+        with closing(f):
+            f.write(content)
+
         parser = TianyaBookInnerTocHTMLParser()
         parser.feed(html);
         baselink = os.path.dirname(path)
         chapters_link = [baselink+'/'+x for x in parser.chapters_link]
         print chapters_link
         for x in parser.chapters_title:
-            print x
-
-        return content
+            self.fetch_save_page(root, host, path)
 
 root = '../book/十日谈'
 host = 'www.tianyabook.com'
-path = '/waiguo2005/b/bujiaqiu/srt/010.htm'
     
 xcfetch = XcFetch()
 path = '/waiguo2005/b/bujiaqiu/srt/'
