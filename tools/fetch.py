@@ -16,6 +16,7 @@ class TianyaBookContentHTMLParser(HTMLParser):
         HTMLParser.__init__(self)
         self.last_tag = None
         self.title = None
+        self.content = None
     def handle_starttag(self, tag, attrs):
         self.last_tag = tag
     def handle_endtag(self, tag):
@@ -87,9 +88,12 @@ class XcFetch(object):
 
     def fetch_save_page(self, root, host, path):
         html = fetchlib.fetch_html(host, path)
-        print html
         parser = TianyaBookContentHTMLParser()
         parser.feed(html)
+        if parser.content is None:
+            print html
+            print 'content is None'
+            return
 
         f = open(root+'/'+parser.title+'.html', 'w')
         with closing(f):
@@ -104,9 +108,10 @@ class XcFetch(object):
         return parser
 
     def fetch_recursive(self, root, host, path):
+        print 'start fetch recursive'
         parser = self.fetch_toc(host, path)
         for x in parser.chapters_title:
-            print x 
+            print x
         print parser.chapters_link
         self.save_toc(root, parser.chapters_title)
 
@@ -124,6 +129,7 @@ class XcFetch(object):
     def fetch_save_chapter(self, root, host, path):
         html = fetchlib.fetch_html(host, path)
         # html = Cache().get('html').decode('gbk').encode('utf-8')
+        print 'is_page', self.is_page(html)
         if self.is_page(html):
             self.fetch_save_page(root, host, path)
         else:
@@ -137,7 +143,6 @@ class XcFetch(object):
         print 'fetch inner chapter ...'
         regex = re.compile(r'<font size=\+3>(.+?)</font>', re.IGNORECASE)
         m = regex.search(html)
-        print m
         title = m.group(1)
         root = root + '/' + title
         if not os.path.exists(root):
