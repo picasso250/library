@@ -6,10 +6,11 @@ import pickle, re
 import urllib, httplib, contextlib, random
 from Cookie import SimpleCookie
 from contextlib import closing 
+import fetchlib
 
 from HTMLParser import HTMLParser
 
-# create a subclass and override the handler methods
+# parser for inner page
 class TianyaBookContentHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
@@ -23,13 +24,14 @@ class TianyaBookContentHTMLParser(HTMLParser):
         if self.last_tag == 'pre':
             content = data
             content = re.split(r'\r\n\r\n', content)
-            content = [ '<p>' + re.sub(r'\r\n', '', x) + '</p>' for x in content]
+            content = ['<p>' + re.sub(r'\r\n', '', x) + '</p>' for x in content]
             content = '\n'.join(content)
             self.content = content
         if self.last_tag == 'title' and self.title is None:
             data = re.split('---', data)
             self.title = data[0]
 
+# parser for toc
 class TianyaBookTocHTMLParser(HTMLParser):
     def __init__(self):
         HTMLParser.__init__(self)
@@ -58,36 +60,34 @@ class TianyaBookTocHTMLParser(HTMLParser):
             self.chapters_title.append(data)
             self.first_data = False
 
+# parser for inner toc
+class TianyaBookInnerTocHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.last_tag = None
+        self.title_pass = False
+        self.chapters_link = []
+        self.chapters_title = []
+        self.first_data = True
+        self.in_content = None
+    def handle_starttag(self, tag, attrs):
+        print 'start', tag
+        self.last_tag = tag
+        if tag == 'hr' and self.in_content is None:
+            self.in_content = True
+        if tag == 'hr' and self.in_content:
+            self.in_content = False
+    def handle_endtag(self, tag):
+        if self.title_pass and tag == 'table' and self.in_links_table == True:
+            self.in_links_table = False
+    def handle_data(self, data):
+        if self.in_content == True:
+            print data
+
 class XcFetch(object):
-    def fetch_html(self, host, path):
-        cache = Cache()
-        data = {
-                }
-        data = urllib.urlencode(data)
-
-        print 'fetch', path, '...'
-        with closing(httplib.HTTPConnection(host)) as conn:
-            headers = self.get_headers_for_request()
-            conn.request("GET", path, data, headers)
-            response = conn.getresponse()
-
-            body = response.read();
-            cache.set('html', body)
-        return body.decode('gbk').encode('utf-8')
-
-    def get_headers_for_request(self, extra = {}):
-        headers = {
-            'Connection': 'keep-alive',
-            'Accept': 'application/json, text/javascript, */*; q=0.01',
-            'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Ubuntu Chromium/28.0.1500.71 Chrome/28.0.1500.71 Safari/537.36',
-            'Referer': 'http://douban.fm/',
-            'Accept-Language': 'zh-CN,zh;q=0.8'
-        }
-        return headers
 
     def fetch_save_page(self, root, host, path):
-        html = self.fetch_html(host, path)
+        html = fetchlib.fetch_html(host, path)
         print html
         parser = TianyaBookContentHTMLParser()
         parser.feed(html)
@@ -97,7 +97,7 @@ class XcFetch(object):
             f.write(parser.content)
 
     def fetch_toc(self, host, path):
-        html = self.fetch_html(host, path)
+        html = fetchlib.fetch_html(host, path)
         parser = TianyaBookTocHTMLParser()
         parser.feed(html)
         parser.chapters_link = [path+x for x in parser.chapters_link]
@@ -115,13 +115,15 @@ class XcFetch(object):
 
     def save_toc(self, root, titles):
         chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
+        if not os.path.exists(root):
+            os.makedirs(root)
         f = open(root+'/index.html', 'w')
         with closing(f):
             f.write('\n'.join(chapters))
 
     def fetch_save_chapter(self, root, host, path):
-        html = self.fetch_html(host, path)
-        html = Cache().get('html').decode('gbk').encode('utf-8')
+        html = fetchlib.fetch_html(host, path)
+        # html = Cache().get('html').decode('gbk').encode('utf-8')
         print html
         if self.is_page(html):
             self.fetch_save_page(root, host, path)
@@ -173,3 +175,5 @@ path = '/waiguo2005/b/bujiaqiu/srt/'
 xcfetch.fetch_recursive(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/0001.htm'
 # xcfetch.fetch_save_chapter(root, host, path)
+path = 'fetch /waiguo2005/b/bujiaqiu/srt/1.html'
+xcfetch.fetch_save_chapter_small(root, host, path)
