@@ -32,39 +32,6 @@ class TianyaBookContentHTMLParser(HTMLParser):
             data = re.split('---', data)
             self.title = data[0]
 
-# parser for toc
-class TianyaBookTocHTMLParser(HTMLParser):
-    def __init__(self):
-        HTMLParser.__init__(self)
-        self.last_tag = None
-        self.title_pass = False
-        self.chapters_link = []
-        self.chapters_title = []
-        self.first_data = True
-    def handle_starttag(self, tag, attrs):
-        self.last_tag = tag
-        if tag == 'a':
-            href = attrs[0][1]
-            if is_current_page_link(href) and is_web_page_file(href):
-                print href
-        if tag == 'font':
-            for (k, v) in attrs:
-                if k == 'size' and v == '+3':
-                    self.title_pass = True
-        if tag == 'a':
-            self.first_data = True
-        if self.title_pass and tag == 'table':
-            self.in_links_table = True
-        if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
-            self.chapters_link.append(attrs[0][1])
-    def handle_endtag(self, tag):
-        if self.title_pass and tag == 'table' and self.in_links_table == True:
-            self.in_links_table = False
-    def handle_data(self, data):
-        if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
-            self.chapters_title.append(data)
-            self.first_data = False
-
 # parser for href link, then we will download them
 class CurrentPageHrefHTMLParser(HTMLParser):
     def __init__(self):
@@ -124,9 +91,13 @@ class TianyaBookInnerTocHTMLParser(HTMLParser):
             self.chapters_title.append(data.strip())
 
 def extract_body_inner_html(html):
-    regex = re.compile(r'<body\b.+?>(.+)</body>', re.IGNORECASE | re.DOTALL)
-    m = regex.search(html)
-    return m.group(1)
+    regex = re.compile(r'<body\b.+?>(.+)</?body>', re.IGNORECASE | re.DOTALL)
+    match = regex.search(html)
+    if match is None:
+        print html
+        print 'not good format to extract body'
+        return ''
+    return match.group(1)
 
 def file_put_contents(filename, data):
     print 'save file', filename
@@ -184,24 +155,12 @@ class XcFetch(object):
 
         parser = CurrentPageHrefHTMLParser()
         parser.feed(html)
-        # parser.chapters_link = [path+x for x in parser.chapters_link]
-        basepath = os.path.basename(path)
+        basepath = os.path.dirname(path)
         for x in parser.links:
             href = x['href']
-            print 'fetch', x['title'], href
             if not ( href == 'index.html' or href == 'index.htm' ):
-                self.fetch_recursive(root, host, basepath + '/' + x['href'])
-
-    # def fetch_recursive(self, root, host, path):
-    #     print 'start fetch recursive'
-    #     parser = self.fetch_toc(host, path)
-    #     for x in parser.chapters_title:
-    #         print x
-    #     print parser.chapters_link
-    #     self.save_toc(root, parser.chapters_title)
-
-    #     for x in parser.chapters_link:
-    #         self.fetch_save_chapter(root, host, x)
+                print 'fetch', x['title'], basepath + '/' +href
+                self.fetch_recursive(root, host, basepath + '/' + href)
 
     def save_toc(self, root, titles):
         chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
