@@ -161,54 +161,10 @@ class XcFetch(object):
                 print x['title'],
                 self.fetch_recursive(root, host, basepath + '/' + href)
 
-    def save_toc(self, root, titles):
-        chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
-        if not os.path.exists(root):
-            os.makedirs(root)
-        f = open(root+'/index.html', 'w')
-        with closing(f):
-            f.write('\n'.join(chapters))
-
-    def fetch_save_chapter(self, root, host, path):
-        html = fetchlib.fetch_html(host, path)
-        # html = Cache().get('html').decode('gbk').encode('utf-8')
-        print 'is_page', self.is_page(html)
-        if self.is_page(html):
-            self.fetch_save_page(root, host, path)
-        else:
-            self.fetch_save_chapter_small(root, host, path, html)
-
     def is_page(self, html):
         regex = re.compile('<pre>', re.IGNORECASE)
         return regex.search(html)
 
-    def fetch_save_chapter_small(self, root, host, path, html):
-        print 'fetch inner chapter ...'
-        regex = re.compile(r'<font size=\+3>(.+?)</font>', re.IGNORECASE)
-        m = regex.search(html)
-        title = m.group(1)
-        root = root + '/' + title
-        if not os.path.exists(root):
-            os.makedirs(root)
-
-        print title
-
-        regex = re.compile(r'<HR\b.+?<HR\b.*?>', re.IGNORECASE | re.DOTALL)
-        m = regex.search(html)
-        content = m.group(0)
-
-        # save toc
-        f = open(root+'/index.html', 'w')
-        with closing(f):
-            f.write(content)
-
-        parser = TianyaBookInnerTocHTMLParser()
-        parser.feed(html);
-        baselink = os.path.dirname(path)
-        chapters_link = [baselink+'/'+x for x in parser.chapters_link]
-        print chapters_link
-        for x in parser.chapters_title:
-            self.fetch_save_page(root, host, path)
 
 root = '../book/十日谈'
 host = 'www.tianyabook.com'
