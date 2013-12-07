@@ -43,6 +43,10 @@ class TianyaBookTocHTMLParser(HTMLParser):
         self.first_data = True
     def handle_starttag(self, tag, attrs):
         self.last_tag = tag
+        if tag == 'a':
+            href = attrs[0][1]
+            if is_current_page_link(href) and is_web_page_file(href):
+                print href
         if tag == 'font':
             for (k, v) in attrs:
                 if k == 'size' and v == '+3':
@@ -60,6 +64,41 @@ class TianyaBookTocHTMLParser(HTMLParser):
         if self.title_pass and self.last_tag == 'a' and self.first_data == True and self.in_links_table:
             self.chapters_title.append(data)
             self.first_data = False
+
+# parser for href link, then we will download them
+class CurrentPageHrefHTMLParser(HTMLParser):
+    def __init__(self):
+        HTMLParser.__init__(self)
+        self.last_tag = None
+        self.links = []
+        self.link = None
+        self.first_data = True
+        self.is_link = False
+    def handle_starttag(self, tag, attrs):
+        self.last_tag = tag
+        if tag == 'a':
+            self.first_data = True
+            href = attrs[0][1]
+            if is_current_page_link(href) and is_web_page_file(href):
+                self.is_link = True
+                self.link = {}
+                self.link['href'] = href
+            else:
+                self.is_link = False
+    def handle_endtag(self, tag):
+        pass
+    def handle_data(self, data):
+        if self.last_tag == 'a' and self.first_data == True and self.is_link:
+            self.link['title'] = data
+            self.links.append(self.link)
+            self.first_data = False
+
+def is_web_page_file(href):
+    name, ext = os.path.splitext(href)
+    return (ext == '.html' or ext == '.htm')
+
+def is_current_page_link(href):
+    return ( len(os.path.dirname(href)) == 0 and href.find(':') == -1 )
 
 # parser for inner toc
 class TianyaBookInnerTocHTMLParser(HTMLParser):
@@ -84,6 +123,11 @@ class TianyaBookInnerTocHTMLParser(HTMLParser):
         if self.in_content == True and len(data.strip()) > 0 and self.last_tag == 'a':
             self.chapters_title.append(data.strip())
 
+def extract_body_inner_html(html):
+    regex = re.compile(r'<body\b.+?>(.+)</body>', re.IGNORECASE | re.DOTALL)
+    m = regex.search(html)
+    return m.group(1)
+
 class XcFetch(object):
 
     def fetch_save_page(self, root, host, path):
@@ -101,10 +145,15 @@ class XcFetch(object):
 
     def fetch_toc(self, host, path):
         print 'fetch toc ...'
-        html = fetchlib.fetch_html(host, path)
-        parser = TianyaBookTocHTMLParser()
+        # html = fetchlib.fetch_html(host, path)
+        html = fetchlib.Cache().get('html').decode('gbk').encode('utf-8')
+        # print extract_body_inner_html(html)
+        # parser = TianyaBookTocHTMLParser()
+        parser = CurrentPageHrefHTMLParser()
         parser.feed(html)
-        parser.chapters_link = [path+x for x in parser.chapters_link]
+        # parser.chapters_link = [path+x for x in parser.chapters_link]
+        for x in parser.links:
+            print x['title'], x['href']
         return parser
 
     def fetch_recursive(self, root, host, path):
@@ -172,9 +221,9 @@ host = 'www.tianyabook.com'
     
 xcfetch = XcFetch()
 path = '/waiguo2005/b/bujiaqiu/srt/'
-# html = xcfetch.fetch_toc(host, path)
+html = xcfetch.fetch_toc(host, path)
 # html = xcfetch.fetch_save_page(root, host, path)
-xcfetch.fetch_recursive(root, host, path)
+# xcfetch.fetch_recursive(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/0001.htm'
 # xcfetch.fetch_save_chapter(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/1.html'
