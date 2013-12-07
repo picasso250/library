@@ -123,7 +123,6 @@ class XcFetch(object):
             f.write(parser.content)
 
     def fetch_recursive(self, root, host, path):
-        print 'fetch recursive ...'
         if path in self.walked:
             print 'fetched', path, 'skip'
             return
@@ -145,7 +144,7 @@ class XcFetch(object):
                 print 'content is None'
                 return
 
-            inner = parser.content
+            inner = '<h1>' + parser.title + '</h1>\n' + parser.content
             file_put_contents(root+'/'+name, inner)
             return
         else:
@@ -159,7 +158,7 @@ class XcFetch(object):
         for x in parser.links:
             href = x['href']
             if not ( href == 'index.html' or href == 'index.htm' ):
-                print 'fetch', x['title'], basepath + '/' +href
+                print x['title'],
                 self.fetch_recursive(root, host, basepath + '/' + href)
 
     def save_toc(self, root, titles):
