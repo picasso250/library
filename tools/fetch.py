@@ -128,6 +128,12 @@ def extract_body_inner_html(html):
     m = regex.search(html)
     return m.group(1)
 
+def file_put_contents(filename, data):
+    print 'save file', filename
+    f = open(filename, 'w')
+    with closing(f):
+        f.write(data)
+
 class XcFetch(object):
 
     def fetch_save_page(self, root, host, path):
@@ -143,29 +149,35 @@ class XcFetch(object):
         with closing(f):
             f.write(parser.content)
 
-    def fetch_toc(self, host, path):
-        print 'fetch toc ...'
+    def fetch_recursive(self, root, host, path):
+        print 'fetch recursive ...'
         # html = fetchlib.fetch_html(host, path)
         html = fetchlib.Cache().get('html').decode('gbk').encode('utf-8')
-        # print extract_body_inner_html(html)
-        # parser = TianyaBookTocHTMLParser()
+        inner = extract_body_inner_html(html)
+        name = os.path.basename(path)
+        if len(name) == 0:
+            name = 'index.html'
+        file_put_contents(root+'/'+name, inner)
+
         parser = CurrentPageHrefHTMLParser()
         parser.feed(html)
         # parser.chapters_link = [path+x for x in parser.chapters_link]
-        for x in parser.links:
-            print x['title'], x['href']
-        return parser
+        # for x in parser.links:
+        #     print 'fetch', x['title']
+        #     href = x['href']
+        #     if not ( href == 'index.html' or href == 'index.htm' ):
+        #         self.fetch_recursive(root, host, x['href'])
 
-    def fetch_recursive(self, root, host, path):
-        print 'start fetch recursive'
-        parser = self.fetch_toc(host, path)
-        for x in parser.chapters_title:
-            print x
-        print parser.chapters_link
-        self.save_toc(root, parser.chapters_title)
+    # def fetch_recursive(self, root, host, path):
+    #     print 'start fetch recursive'
+    #     parser = self.fetch_toc(host, path)
+    #     for x in parser.chapters_title:
+    #         print x
+    #     print parser.chapters_link
+    #     self.save_toc(root, parser.chapters_title)
 
-        for x in parser.chapters_link:
-            self.fetch_save_chapter(root, host, x)
+    #     for x in parser.chapters_link:
+    #         self.fetch_save_chapter(root, host, x)
 
     def save_toc(self, root, titles):
         chapters = ['<a href="'+x+'.html">'+x+'</a>' for x in titles]
@@ -221,9 +233,9 @@ host = 'www.tianyabook.com'
     
 xcfetch = XcFetch()
 path = '/waiguo2005/b/bujiaqiu/srt/'
-html = xcfetch.fetch_toc(host, path)
+# html = xcfetch.fetch_toc(host, path)
 # html = xcfetch.fetch_save_page(root, host, path)
-# xcfetch.fetch_recursive(root, host, path)
+xcfetch.fetch_recursive(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/0001.htm'
 # xcfetch.fetch_save_chapter(root, host, path)
 path = '/waiguo2005/b/bujiaqiu/srt/1.html'
