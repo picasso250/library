@@ -135,6 +135,8 @@ def file_put_contents(filename, data):
         f.write(data)
 
 class XcFetch(object):
+    def __init__(self):
+        self.walked = []
 
     def fetch_save_page(self, root, host, path):
         html = fetchlib.fetch_html(host, path)
@@ -151,22 +153,42 @@ class XcFetch(object):
 
     def fetch_recursive(self, root, host, path):
         print 'fetch recursive ...'
-        # html = fetchlib.fetch_html(host, path)
+        if path in self.walked:
+            print 'fetched', path, 'skip'
+            return
+
+        # fetch
+        html = fetchlib.fetch_html(host, path)
         html = fetchlib.Cache().get('html').decode('gbk').encode('utf-8')
-        inner = extract_body_inner_html(html)
+
+        # name
         name = os.path.basename(path)
         if len(name) == 0:
             name = 'index.html'
+
+        if self.is_page(html):
+            parser = TianyaBookContentHTMLParser()
+            parser.feed(html)
+            if parser.content is None:
+                print html
+                print 'content is None'
+                return
+
+            inner = parser.content
+        else:
+            inner = extract_body_inner_html(html)
+
         file_put_contents(root+'/'+name, inner)
 
         parser = CurrentPageHrefHTMLParser()
         parser.feed(html)
         # parser.chapters_link = [path+x for x in parser.chapters_link]
-        # for x in parser.links:
-        #     print 'fetch', x['title']
-        #     href = x['href']
-        #     if not ( href == 'index.html' or href == 'index.htm' ):
-        #         self.fetch_recursive(root, host, x['href'])
+        basepath = os.path.basename(path)
+        for x in parser.links:
+            href = x['href']
+            print 'fetch', x['title'], href
+            if not ( href == 'index.html' or href == 'index.htm' ):
+                self.fetch_recursive(root, host, basepath + '/' + x['href'])
 
     # def fetch_recursive(self, root, host, path):
     #     print 'start fetch recursive'
