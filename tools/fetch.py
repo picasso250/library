@@ -175,6 +175,8 @@ class XcFetch(object):
                 return
 
             inner = parser.content
+            file_put_contents(root+'/'+name, inner)
+            return
         else:
             inner = extract_body_inner_html(html)
 
