@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# in fact, I think fetch and process should be separated
+
 import sys, os, time, thread, datetime
 import pickle, re
 import urllib, httplib, contextlib, random
