@@ -1,20 +1,32 @@
 <?php
 
-$url = 'http://www.esgweb.net/Html/Yxzcpstj/10.htm';
+$toc = array(
+    // '序', '凡例', 
+    '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23', '24', '25', '26', '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '77', '78', '79', '80',);
 
-$a = get_title_content_by_url($url);
-print_r($a);
-file_put_contents("read-demo/book/$a[0]", $a[1]);
+foreach ($toc as $i) {
+    $url = "http://www.esgweb.net/Html/Yxzcpstj/$i.htm";
+    echo("$url\n");
+    list($title, $content) = $a = get_title_content_by_url($url);
+    print_r($a);
+    if (empty($title)) {
+        throw new Exception("empty title", 1);
+    }
+    file_put_contents("read-demo/book/$a[0]", $a[1]);
+}
 
 function get_title_content_by_url($url)
 {
     // pass 1 get page
-    // $ch = curl_init($url);
-    // curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    // $body = curl_exec($ch);
-    // $body = iconv('gbk', 'utf8', $body);
-    // file_put_contents('cache', $body);
-    $body = file_get_contents('cache');
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $body = curl_exec($ch);
+    $cache_file = __DIR__.'/cache/'.str_replace('/', '--', $url);
+    file_put_contents($cache_file, $body);
+    $body = file_get_contents($cache_file);
+    $body = mb_convert_encoding($body, 'utf8', 'gbk');
+    var_dump($body);
+    exit();
 
     // pass 2 get content
     // get content
