@@ -25,8 +25,6 @@ function get_title_content_by_url($url)
     file_put_contents($cache_file, $body);
     $body = file_get_contents($cache_file);
     $body = mb_convert_encoding($body, 'utf8', 'gbk');
-    var_dump($body);
-    exit();
 
     // pass 2 get content
     // get content
