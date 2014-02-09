@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>第十六回</title>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <style type="text/css">
+  body {
+    padding-left: 330px;
+    padding-right: 330px;
+    /*todo div and .content and margin auto*/
+  }
+  .comment {
+    color: red;
+  }
+  </style>
+  <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+</head>
+<body>
+
+<h1><?= $title ?></h1>
+
+<hr>
+
+<div class="content"><?= $content ?></div>
+
+<button style="position: fixed; top: 0;" onclick="$('.comment').hide();">toggle all</button>
+</body>
+</html>
