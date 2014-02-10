@@ -51,6 +51,20 @@ function get_title_content_by_url($url)
     $content = preg_replace('%<center>.+%is', '', $content);
 
     // pass 3 struct
+
+    preg_match_all('%(.{0,10})<font color="#ff0000">(.+?)</font>(.{0,10})%us', $content, $matches, PREG_SET_ORDER|PREG_OFFSET_CAPTURE);
+    print_r($matches);
+    $pizhu_list = array();
+    foreach ($matches as $key => $value) {
+        $pizhu_list[] = array(
+            'pos' => $value[2][1], 
+            'pizhu' => $value[2][0], 
+            'before' => $value[1][0], 
+            'after' => $value[3][0],
+        );
+    }
+    print_r($pizhu_list);
+    exit;
     $content = preg_replace('%<font color="#ff0000">(.+?)</font>%', '<span class="pizhu">$1</span>', $content);
     return array($title, $content);
 }
