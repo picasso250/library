@@ -41,7 +41,10 @@ function get_title_content_by_url($url)
     } else {
         $title = trim($matches[1]);
     }
+    $title = preg_replace('/^(　|　)+/', '', $title);
     echo "title: $title\n";
+
+    // pass 3 process content
     // chop href
     $content = preg_replace('%<p.+<a.+</p>%s', '', $content);
     // chop hr
@@ -56,17 +59,15 @@ function get_title_content_by_url($url)
 
     // pass 3 struct
     $pizhu_list = array();
-    $content = preg_replace_callback('%(.{0,10})<font color="#ff0000">(.+?)</font>(.{0,10})%us', function ($matches) use (&$pizhu_list) {
+    $content = preg_replace_callback('%<font color="#ff0000">(.+?)</font>%us', function ($matches) use (&$pizhu_list) {
         $pizhu_list[] = array(
-            'pizhu' => $matches[2], 
-            'before' => $matches[1], 
-            'after' => $matches[3],
+            'pizhu' => $matches[1], 
         );
         static $i;
         if (empty($i)) {
             $i = 0;
         }
-        return $matches[1].'{_pizhu:'.($i++).'}'.$matches[3];
+        return '{_pizhu:'.($i++).'}';
     }, $content);
 
     // pass 4
