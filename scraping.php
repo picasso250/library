@@ -30,6 +30,7 @@ function get_title_content_by_url($url)
     // get content
     preg_match('%<td[^<]*class="content">(.+?)</td>%ism', $body, $matches);
     $content = $matches[1];
+    file_put_contents('content.txt', $content);
     // get title
     $is_match = preg_match('%<font size="3">(.+?)<br>|</span><br>([^<]+?)<br>%s', $content, $matches);
     if (!$is_match) {
@@ -41,9 +42,13 @@ function get_title_content_by_url($url)
         $title = trim($matches[1]);
     }
     echo "title: $title\n";
-    // chop start
-    // todo performance
-    $content = preg_replace('%.+?<font size="3">.+?<br>%s', '', $content);
+    // chop href
+    $content = preg_replace('%<p.+<a.+</p>%s', '', $content);
+    // chop hr
+    $content = preg_replace('%<hr>%s', '', $content);
+    // chop title
+    $content = preg_replace('%<font size="3">(.+?)<br>|</span><br>([^<]+?)<br>%s', '', $content);
+
     // chop script
     $content = preg_replace('%<script.+?/script>%is', '', $content);
     // chop end
@@ -63,5 +68,12 @@ function get_title_content_by_url($url)
         }
         return $matches[1].'{_pizhu:'.($i++).'}'.$matches[3];
     }, $content);
+
+    // pass 4
+    // $content = preg_replace('%(<br>)+%is', "\n", $content);
+    $content = strip_tags($content);
+    file_put_contents('content.txt', $content);
+    $content = preg_split('/\s+/', $content);
+    $content = array_filter($content, function($e){return trim($e);});
     return array($title, $content, $pizhu_list);
 }

@@ -7,6 +7,7 @@ $toc = include __DIR__.'/toc.php';
 if ($name = _get('name')) {
     // chapter
     list($title, $content, $pizhu_list) = unserialize(file_get_contents(__DIR__."/book/$name"));
+    $content = implode('', array_map(function($e){return "<p>$e<p>";}, $content));
     $content = preg_replace_callback('/{_pizhu:\d+}/', function ($matches) use ($pizhu_list) {
         static $i;
         if (empty($i)) {
