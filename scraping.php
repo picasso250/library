@@ -5,11 +5,10 @@ $toc = include __DIR__.'/read-demo/toc.php';
 foreach ($toc as $i) {
     $url = "http://www.esgweb.net/Html/Yxzcpstj/$i.htm";
     echo("$url\n");
-    list($title, $content) = $a = get_title_content_by_url($url);
+    list($title, $content, $pizhu_list) = $a = get_title_content_by_url($url);
     if (empty($title)) {
         throw new Exception("empty title", 1);
     }
-
     file_put_contents("read-demo/book/$i", serialize($a));
 }
 
@@ -51,20 +50,18 @@ function get_title_content_by_url($url)
     $content = preg_replace('%<center>.+%is', '', $content);
 
     // pass 3 struct
-
-    preg_match_all('%(.{0,10})<font color="#ff0000">(.+?)</font>(.{0,10})%us', $content, $matches, PREG_SET_ORDER|PREG_OFFSET_CAPTURE);
-    print_r($matches);
     $pizhu_list = array();
-    foreach ($matches as $key => $value) {
+    $content = preg_replace_callback('%(.{0,10})<font color="#ff0000">(.+?)</font>(.{0,10})%us', function ($matches) use (&$pizhu_list) {
         $pizhu_list[] = array(
-            'pos' => $value[2][1], 
-            'pizhu' => $value[2][0], 
-            'before' => $value[1][0], 
-            'after' => $value[3][0],
+            'pizhu' => $matches[2], 
+            'before' => $matches[1], 
+            'after' => $matches[3],
         );
-    }
-    print_r($pizhu_list);
-    exit;
-    $content = preg_replace('%<font color="#ff0000">(.+?)</font>%', '<span class="pizhu">$1</span>', $content);
-    return array($title, $content);
+        static $i;
+        if (empty($i)) {
+            $i = 0;
+        }
+        return $matches[1].'{_pizhu:'.($i++).'}'.$matches[3];
+    }, $content);
+    return array($title, $content, $pizhu_list);
 }
