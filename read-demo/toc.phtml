@@ -1,5 +1,31 @@
-<ul>
-  <?php foreach ($toc as $i): ?>
-  <li><a href="?name=<?= $i['name'] ?>"><?= $i['title'] ?></a></li>
-  <?php endforeach ?>
-</ul>
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>脂砚斋重评石头记</title>
+  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+  <style type="text/css">
+  body {
+  }
+  .pizhu {
+    color: red;
+    font-size: small;
+    border: 1px solid red;
+  }
+  </style>
+  <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+</head>
+<body>
+  <div class="col-md-6 col-md-offset-3">
+    <h1>脂砚斋重评石头记</h1>
+
+    <ul>
+      <?php foreach ($toc as $i): ?>
+      <li><a href="?name=<?= $i['name'] ?>"><?= $i['title'] ?></a></li>
+      <?php endforeach ?>
+    </ul>
+  </div>
+
+</body>
+</html>
+
