@@ -1,13 +1,10 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-  <title>第十六回</title>
+  <title><?= $title ?></title>
   <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
   <style type="text/css">
   body {
-    padding-left: 330px;
-    padding-right: 330px;
-    /*todo div and .content and margin auto*/
   }
   .pizhu {
     color: red;
@@ -19,13 +16,15 @@
   <script type="text/javascript" src="js/bootstrap.min.js"></script>
 </head>
 <body>
+  <div class="col-md-6 col-md-offset-3">
+    <h1><?= $title ?></h1>
 
-<h1><?= $title ?></h1>
+    <hr>
 
-<hr>
+    <div class="content"><?= $content ?></div>
 
-<div class="content"><?= $content ?></div>
+    <!-- <button style="position: fixed; top: 0;" onclick="$('.comment').hide();">toggle all</button> -->
+  </div>
 
-<button style="position: fixed; top: 0;" onclick="$('.comment').hide();">toggle all</button>
 </body>
 </html>
