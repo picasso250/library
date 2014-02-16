@@ -1,40 +1,11 @@
-<!DOCTYPE HTML>
-<html>
-<head>
-  <title><?= $title ?></title>
-  <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
-  <style type="text/css">
-  body {
-  }
-  .content {
-    font-size: large;
-  }
-  .pizhu {
-    color: red;
-    font-size: small;
-    border: 1px solid red;
-  }
-  </style>
-  <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-  <script type="text/javascript" src="js/bootstrap.min.js"></script>
-  <script type="text/javascript">
-  $(function () {
-    $(document.body).on('mouseup', function (e) {
-      console.log(window.getSelection());
-    });
-  });
-  </script>
-</head>
-<body>
-  <div class="col-md-6 col-md-offset-3">
-    <h1><?= $title ?></h1>
 
-    <hr>
+<div class="col-md-6 col-md-offset-3">
+  <h1><?= $title ?></h1>
 
-    <div class="content"><?= $content ?></div>
+  <hr>
 
-    <!-- <button style="position: fixed; top: 0;" onclick="$('.comment').hide();">toggle all</button> -->
-  </div>
+  <div class="content"><?= $content ?></div>
 
-</body>
-</html>
+  <!-- <button style="position: fixed; top: 0;" onclick="$('.comment').hide();">toggle all</button> -->
+</div>
+

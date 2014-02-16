@@ -17,7 +17,7 @@ if ($name = _get('name')) {
         $i++;
         return '<span class="pizhu">'.$pizhu.'</span>';
     }, $content);
-    include __DIR__.'/index.phtml';
+    $content_tpl = __DIR__.'/index.phtml';
 } else {
     // toc
     foreach ($toc as $k => &$i) {
@@ -27,5 +27,7 @@ if ($name = _get('name')) {
             'title' => $title,
         );
     }
-    include __DIR__.'/toc.phtml';
+    $title = '脂砚斋重评石头记';
+    $content_tpl = __DIR__.'/toc.phtml';
 }
+include __DIR__.'/layout.phtml';
